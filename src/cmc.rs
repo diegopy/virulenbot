@@ -22,7 +22,7 @@ impl CoinMarketCapAPI {
     pub async fn get_price(&self, symbol: &str) -> Result<f64> {
         let builder = self
             .client
-            .get(" https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest");
+            .get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest");
         let res = builder.query(&[("symbol", symbol)]).send().await?;
         let res: Value = res.json().await?;
         res["data"][symbol]["quote"]["USD"]["price"]
