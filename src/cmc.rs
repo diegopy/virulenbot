@@ -1,9 +1,15 @@
-use anyhow::{Error, Result};
+use std::collections::HashMap;
+
+use crate::{NamedAPI, PriceAPI};
+use anyhow::{anyhow, Result};
+use async_trait::async_trait;
+use log::info;
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client,
 };
 use serde_json::Value;
+
 pub struct CoinMarketCapAPI {
     client: Client,
 }
@@ -19,14 +25,39 @@ impl CoinMarketCapAPI {
             client: Client::builder().default_headers(headers).build()?,
         })
     }
-    pub async fn get_price(&self, symbol: &str) -> Result<f64> {
+}
+
+impl NamedAPI for CoinMarketCapAPI {
+    fn get_name(&self) -> String {
+        "CoinMarketCap".to_owned()
+    }
+}
+
+#[async_trait]
+impl PriceAPI for CoinMarketCapAPI {
+    async fn get_price(&self, id_list: &[&str], in_currency: &str) -> Result<Vec<(String, f64)>> {
         let builder = self
             .client
             .get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest");
-        let res = builder.query(&[("symbol", symbol)]).send().await?;
+        let res = builder
+            .query(&[("id", id_list.join(",").as_str()), ("convert", in_currency)])
+            .send()
+            .await?;
         let res: Value = res.json().await?;
-        res["data"][symbol]["quote"]["USD"]["price"]
-            .as_f64()
-            .ok_or(Error::msg("Cannot parse CoinMarketCap response"))
+        info!("CMC response {:?}", res);
+        id_list
+            .iter()
+            .map(|id| {
+                let entry = &res["data"][id];
+                entry["quote"][in_currency.to_uppercase()]["price"]
+                    .as_f64()
+                    .and_then(|price| entry["name"].as_str().map(|name| (name.to_owned(), price)))
+                    .ok_or(anyhow!("Can't parse CoinMarketCap response"))
+            })
+            .collect()
+    }
+
+    async fn get_symbol_map(&self) -> Result<HashMap<String, Vec<String>>> {
+        todo!()
     }
 }

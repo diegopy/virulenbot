@@ -1,4 +1,4 @@
-use virulenbot::cmc::CoinMarketCapAPI;
+use virulenbot::{cmc::CoinMarketCapAPI, PriceAPI};
 
 #[tokio::test]
 async fn test_cmc() {
@@ -6,5 +6,5 @@ async fn test_cmc() {
     env_logger::init();
     let token = std::env::var("COINMARKETCAP_TOKEN").expect("Getting CoinMarketCap token");
     let api = CoinMarketCapAPI::with_token(&token).unwrap();
-    assert!(api.get_price("BTC").await.is_ok())
+    assert!(api.get_price(&["BTC"], "usd").await.is_ok())
 }
