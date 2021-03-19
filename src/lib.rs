@@ -33,7 +33,7 @@ pub trait NamedAPI {
 }
 
 #[async_trait]
-trait PriceQuotingStrategy {
+pub trait PriceQuotingStrategy {
     async fn get_quote(&self, symbol: &str, in_currency: &str) -> Result<Vec<SymbolPriceQuote>>;
 }
 

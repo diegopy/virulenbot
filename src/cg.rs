@@ -111,7 +111,10 @@ impl PriceAPI for CoinGeckoAPI {
         let map_data = self.get_map_data().await?;
         let mut result = HashMap::new();
         for datum in map_data {
-            result.entry(datum.symbol).or_insert(vec![]).push(datum.id);
+            result
+                .entry(datum.symbol.to_uppercase())
+                .or_insert(vec![])
+                .push(datum.id);
         }
         Ok(result)
         /*

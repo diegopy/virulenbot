@@ -46,7 +46,7 @@ impl<T: PriceAPI + Send + Sync> PriceAPI for SymbolMapCacheStrategy<T> {
                     return Ok(cache.data.clone());
                 }
             }
-            fresh_symbol_map = Some(self.get_symbol_map().await?);
+            fresh_symbol_map = Some(self.api.get_symbol_map().await?);
         }
     }
 

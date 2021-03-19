@@ -8,6 +8,7 @@ use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client,
 };
+use serde::Deserialize;
 use serde_json::Value;
 
 pub struct CoinMarketCapAPI {
@@ -36,6 +37,7 @@ impl NamedAPI for CoinMarketCapAPI {
 #[async_trait]
 impl PriceAPI for CoinMarketCapAPI {
     async fn get_price(&self, id_list: &[&str], in_currency: &str) -> Result<Vec<(String, f64)>> {
+        info!("CMC called with {:?}", id_list);
         let builder = self
             .client
             .get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest");
@@ -58,6 +60,29 @@ impl PriceAPI for CoinMarketCapAPI {
     }
 
     async fn get_symbol_map(&self) -> Result<HashMap<String, Vec<String>>> {
-        todo!()
+        let builder = self
+            .client
+            .get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/map");
+        let res = builder.send().await?;
+        let map_data: IDMap = res.json().await?;
+        let mut result = HashMap::new();
+        for entry in map_data.data {
+            result
+                .entry(entry.symbol.to_uppercase())
+                .or_insert(vec![])
+                .push(entry.id.to_string());
+        }
+        Ok(result)
     }
+}
+
+#[derive(Deserialize)]
+struct IDMap {
+    data: Vec<IDMapEntry>,
+}
+
+#[derive(Deserialize)]
+struct IDMapEntry {
+    id: i32,
+    symbol: String,
 }

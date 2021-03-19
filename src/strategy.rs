@@ -1,5 +1,5 @@
 use crate::{NamedAPI, PriceAPI, PriceQuotingStrategy, SymbolPriceQuote, TokenQuote};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use futures::future;
 use itertools::Itertools;
@@ -32,7 +32,7 @@ impl PriceQuotingStrategy for MultiAPIQuoteStrategy {
             if let Some(ids) = maybe_ids {
                 api.get_price(&ids, in_currency).await
             } else {
-                Ok(vec![])
+                Err(anyhow!("{} not found in {} map", symbol, api.get_name()))
             }
         };
         let pending_quotes = (0..self.apis.len()).map(|i| quote_retriever(i));
