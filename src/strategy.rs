@@ -37,7 +37,6 @@ impl PriceQuotingStrategy for MultiAPIQuoteStrategy {
         };
         let pending_quotes = (0..self.apis.len()).map(|i| quote_retriever(i));
         let quotes = future::join_all(pending_quotes).await;
-        //let futures = self.apis.iter().map(|api| api.get)
         Ok(self
             .apis
             .iter()

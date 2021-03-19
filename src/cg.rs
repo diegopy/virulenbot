@@ -9,15 +9,12 @@ use serde::Deserialize;
 use serde_json::Value;
 pub struct CoinGeckoAPI {
     client: Client,
-    //symbol_cache: Mutex<SymbolCache>,
-    //max_cache_age: Duration,
 }
 
 #[derive(Deserialize)]
 struct SymbolMap {
     id: String,
     symbol: String,
-    //name: String,
 }
 
 impl CoinGeckoAPI {
@@ -40,32 +37,6 @@ impl CoinGeckoAPI {
         let result: Vec<SymbolMap> = res.json().await?;
         Ok(result)
     }
-
-    /*     pub async fn get_id_for(&self, symbol: &str) -> Result<String> {
-        let mut fresh_symbol_map = None::<Vec<SymbolMap>>;
-        loop {
-            {
-                let mut cache = self.symbol_cache.lock();
-                if let Some(symbols) = fresh_symbol_map {
-                    cache.data.clear();
-                    for symbol_data in symbols {
-                        cache
-                            .data
-                            .insert(symbol_data.symbol.to_uppercase(), symbol_data.id);
-                    }
-                    cache.last_refresh = Instant::now();
-                }
-                if !cache.data.is_empty() && cache.last_refresh.elapsed() < self.max_cache_age {
-                    return cache
-                        .data
-                        .get(symbol)
-                        .ok_or(anyhow!("get_id_for: Missing id for symbol {}", symbol))
-                        .map(|s| s.clone());
-                }
-            }
-            fresh_symbol_map = Some(self.get_symbol_map().await?);
-        }
-    } */
 }
 /*
 [
@@ -117,11 +88,6 @@ impl PriceAPI for CoinGeckoAPI {
                 .push(datum.id);
         }
         Ok(result)
-        /*
-        Ok(symbols
-            .into_iter()
-            .map(|sd| (sd.symbol.to_uppercase(), sd.id))
-            .collect())*/
     }
 }
 
