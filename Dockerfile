@@ -1,4 +1,4 @@
-FROM rust:1.50 AS build
+FROM rust:1.51 AS build
 WORKDIR /app
 RUN apt-get update && apt-get install -y musl-dev musl-tools
 
@@ -21,6 +21,6 @@ RUN strip target/x86_64-unknown-linux-musl/release/virulenbot
 
 # Copy the statically-linked binary into a scratch container.
 FROM scratch
-COPY --from=build /app/webby/target/x86_64-unknown-linux-musl/release/virulenbot .
+COPY --from=build /app/virulenbot/target/x86_64-unknown-linux-musl/release/virulenbot .
 USER 1000
 CMD ["./virulenbot"]

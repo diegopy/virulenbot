@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{NamedAPI, PriceAPI};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use log::info;
+use log::debug;
 use reqwest::{header::HeaderMap, Client};
 use serde::Deserialize;
 use serde_json::Value;
@@ -34,8 +34,7 @@ impl CoinGeckoAPI {
             .query(&[("include_platform", "false")])
             .send()
             .await?;
-        let result: Vec<SymbolMap> = res.json().await?;
-        Ok(result)
+        res.json().await.map_err(|e| e.into())
     }
 }
 /*
@@ -66,7 +65,7 @@ impl PriceAPI for CoinGeckoAPI {
             .send()
             .await?;
         let res: Value = res.json().await?;
-        info!("CoinGecko response {:?}", res);
+        debug!("CoinGecko response {:?}", res);
         id_list
             .iter()
             .map(|id| {

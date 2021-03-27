@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{NamedAPI, PriceAPI};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use log::info;
+use log::debug;
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client,
@@ -37,7 +37,6 @@ impl NamedAPI for CoinMarketCapAPI {
 #[async_trait]
 impl PriceAPI for CoinMarketCapAPI {
     async fn get_price(&self, id_list: &[&str], in_currency: &str) -> Result<Vec<(String, f64)>> {
-        info!("CMC called with {:?}", id_list);
         let builder = self
             .client
             .get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest");
@@ -46,7 +45,7 @@ impl PriceAPI for CoinMarketCapAPI {
             .send()
             .await?;
         let res: Value = res.json().await?;
-        info!("CMC response {:?}", res);
+        debug!("CoinMarketCap response {:?}", res);
         id_list
             .iter()
             .map(|id| {
