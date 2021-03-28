@@ -14,7 +14,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use log::{debug, info};
+use log::{debug, error, info};
 use reqwest::StatusCode;
 use serde::Serialize;
 use serde_json::Value;
@@ -155,23 +155,49 @@ async fn webhook_handler<T: PriceQuotingStrategy>(
     json: Value,
     args: (Bot, String, Arc<T>),
 ) -> Result<Response, Rejection> {
-    info!("In webhook handler with value {}", json);
     let (bot, bot_name, strategy) = args;
-    let response = if let Ok(update) = Update::try_parse(&json) {
-        match update.kind {
-            UpdateKind::Message(message) => {
-                webook_repl(bot.clone(), &bot_name, message, strategy.as_ref()).await
-            }
-            _ => None,
+    let reply = match Update::try_parse(&json) {
+        Ok(update) => handle_update_message(update, bot, bot_name, strategy).await,
+        Err(parse_error) => {
+            error!("Cannot parse webhook update {}", parse_error);
+            StatusCode::BAD_REQUEST.into_response()
         }
-    } else {
-        None
     };
-    let reply = response
-        .map(|json_req| reply::json(&WebhookReply::try_from(json_req).unwrap()).into_response())
-        .unwrap_or(StatusCode::OK.into_response());
-    info!("webhook replying with {:?}", reply);
     Ok(reply)
+}
+
+async fn handle_update_message<T: PriceQuotingStrategy>(
+    update: Update,
+    bot: Bot,
+    bot_name: String,
+    strategy: Arc<T>,
+) -> Response {
+    let response = match update.kind {
+        UpdateKind::Message(message) => {
+            webook_repl(bot.clone(), &bot_name, message, strategy.as_ref()).await
+        }
+        _ => {
+            info!(
+                "Received update type {:?} which is not a message, ignoring",
+                update.kind
+            );
+            None
+        }
+    };
+    response
+        .map(|json_req| WebhookReply::try_from(json_req))
+        .transpose()
+        .map_or_else(
+            |parse_error| {
+                error!("Error while processing webook reply {:?}", parse_error);
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            },
+            |result| {
+                result.map_or(StatusCode::OK.into_response(), |webhook_reply| {
+                    reply::json(&webhook_reply).into_response()
+                })
+            },
+        )
 }
 
 fn with_data<T: PriceQuotingStrategy + Send + Sync>(
@@ -184,7 +210,7 @@ fn with_data<T: PriceQuotingStrategy + Send + Sync>(
 
 async fn webhook_mode<T: PriceQuotingStrategy + Send + Sync + 'static>(
     bot: Bot,
-    bot_name: &str,
+    bot_name: String,
     strategy: T,
 ) -> Result<()> {
     let endpoint = env::var("ENDPOINT").expect("ENDPOINT env variable");
@@ -196,7 +222,7 @@ async fn webhook_mode<T: PriceQuotingStrategy + Send + Sync + 'static>(
     let strategy = Arc::new(strategy);
     let server = warp::post()
         .and(warp::body::json())
-        .and(with_data(bot, bot_name.to_owned(), strategy))
+        .and(with_data(bot, bot_name, strategy))
         .and_then(webhook_handler)
         .recover(handle_rejection);
     let server = warp::serve(server);
@@ -213,7 +239,7 @@ async fn webhook_mode<T: PriceQuotingStrategy + Send + Sync + 'static>(
 
 async fn poll_mode<T: PriceQuotingStrategy + Send + Sync + 'static>(
     bot: Bot,
-    bot_name: &'static str,
+    bot_name: String,
     strategy: T,
 ) -> Result<()> {
     bot.delete_webhook().send().await?;
@@ -245,9 +271,11 @@ async fn main() -> Result<()> {
         .context("Getting MODE env var")
         .unwrap_or("poll".to_owned());
     info!("Using mode {}", mode);
+    let me = bot.get_me().send().await.expect("GetMe").user;
+    let username = me.username.unwrap_or("Unknown".to_owned());
     if mode == "webhook" {
-        webhook_mode(bot, "pepe", strategy).await
+        webhook_mode(bot, username, strategy).await
     } else {
-        poll_mode(bot, "pepe", strategy).await
+        poll_mode(bot, username, strategy).await
     }
 }
