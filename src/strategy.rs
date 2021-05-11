@@ -12,7 +12,7 @@ pub struct MultiAPIQuoteStrategy {
 
 impl MultiAPIQuoteStrategy {
     pub fn new(apis: Vec<Box<dyn NamedPriceAPI>>) -> Self {
-        Self { apis: apis }
+        Self { apis }
     }
 }
 
@@ -35,7 +35,7 @@ impl PriceQuotingStrategy for MultiAPIQuoteStrategy {
                 Err(anyhow!("{} not found in {} map", symbol, api.get_name()))
             }
         };
-        let pending_quotes = (0..self.apis.len()).map(|i| quote_retriever(i));
+        let pending_quotes = (0..self.apis.len()).map(quote_retriever);
         let quotes = future::join_all(pending_quotes).await;
         Ok(self
             .apis

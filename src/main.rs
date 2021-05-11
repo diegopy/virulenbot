@@ -1,11 +1,3 @@
-#![warn(
-    clippy::all,
-    clippy::restriction,
-    clippy::pedantic,
-    clippy::nursery,
-    clippy::cargo
-)]
-
 use std::{
     convert::{Infallible, TryFrom},
     env,
@@ -48,7 +40,7 @@ enum Command {
     //ClearCache,
 }
 
-fn format_quotes(quotes: &Vec<SymbolPriceQuote>) -> String {
+fn format_quotes(quotes: &[SymbolPriceQuote]) -> String {
     let mut result = String::new();
     for quote in quotes {
         result.push_str(&quote.source_name);
@@ -185,7 +177,7 @@ async fn handle_update_message<T: PriceQuotingStrategy>(
         }
     };
     response
-        .map(|json_req| WebhookReply::try_from(json_req))
+        .map(WebhookReply::try_from)
         .transpose()
         .map_or_else(
             |parse_error| {
@@ -269,10 +261,10 @@ async fn main() -> Result<()> {
     let strategy = MultiAPIQuoteStrategy::new(apis);
     let mode = std::env::var("MODE")
         .context("Getting MODE env var")
-        .unwrap_or("poll".to_owned());
+        .unwrap_or_else(|_| "poll".to_owned());
     info!("Using mode {}", mode);
     let me = bot.get_me().send().await.expect("GetMe").user;
-    let username = me.username.unwrap_or("Unknown".to_owned());
+    let username = me.username.unwrap_or_else(|| "Unknown".to_owned());
     if mode == "webhook" {
         webhook_mode(bot, username, strategy).await
     } else {

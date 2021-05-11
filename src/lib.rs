@@ -1,11 +1,3 @@
-#![warn(
-    clippy::all,
-    clippy::restriction,
-    clippy::pedantic,
-    clippy::nursery,
-    clippy::cargo
-)]
-
 pub mod cache;
 pub mod cg;
 pub mod cmc;

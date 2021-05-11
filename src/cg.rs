@@ -72,7 +72,7 @@ impl PriceAPI for CoinGeckoAPI {
                 res[id][in_currency]
                     .as_f64()
                     .map(|price| (id.to_string(), price))
-                    .ok_or(anyhow!("Cannot parse CoinGecko response"))
+                    .ok_or_else(|| anyhow!("Cannot parse CoinGecko response"))
             })
             .collect()
     }
@@ -83,7 +83,7 @@ impl PriceAPI for CoinGeckoAPI {
         for datum in map_data {
             result
                 .entry(datum.symbol.to_uppercase())
-                .or_insert(vec![])
+                .or_insert_with(Vec::new)
                 .push(datum.id);
         }
         Ok(result)

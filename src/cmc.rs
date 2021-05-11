@@ -53,7 +53,7 @@ impl PriceAPI for CoinMarketCapAPI {
                 entry["quote"][in_currency.to_uppercase()]["price"]
                     .as_f64()
                     .and_then(|price| entry["name"].as_str().map(|name| (name.to_owned(), price)))
-                    .ok_or(anyhow!("Can't parse CoinMarketCap response"))
+                    .ok_or_else(|| anyhow!("Can't parse CoinMarketCap response"))
             })
             .collect()
     }
@@ -68,7 +68,7 @@ impl PriceAPI for CoinMarketCapAPI {
         for entry in map_data.data {
             result
                 .entry(entry.symbol.to_uppercase())
-                .or_insert(vec![])
+                .or_insert_with(Vec::new)
                 .push(entry.id.to_string());
         }
         Ok(result)
