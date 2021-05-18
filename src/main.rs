@@ -32,9 +32,9 @@ use warp::{
 #[derive(BotCommand)]
 #[command(rename = "lowercase", description = "VirulenBot commands:")]
 enum Command {
-    #[command(description = "display this text.")]
+    #[command(description = "Display this text.")]
     Help,
-    #[command(description = "get token valuation in USD.")]
+    #[command(description = "Get token valuation in USD.")]
     Quote(String),
     //#[command(description = "clear the api caches.")]
     //ClearCache,
