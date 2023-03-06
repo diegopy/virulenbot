@@ -1,6 +1,6 @@
-FROM rust:1.51 AS build
+FROM rust:1.67.1 AS build
 WORKDIR /app
-RUN apt-get update && apt-get install -y musl-dev musl-tools
+RUN apt-get update && apt-get install -y musl-dev musl-tools g++-x86-64-linux-gnu libc6-dev-amd64-cross
 
 # Download the target for static linking.
 RUN rustup target add x86_64-unknown-linux-musl
