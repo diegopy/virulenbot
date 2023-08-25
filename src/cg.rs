@@ -64,8 +64,9 @@ impl PriceAPI for CoinGeckoAPI {
             ])
             .send()
             .await?;
+        let status = res.status();
         let res: Value = res.json().await?;
-        debug!("CoinGecko response {:?}", res);
+        debug!("CoinGecko status: {}, response {:?}", status, res);
         id_list
             .iter()
             .map(|id| {
