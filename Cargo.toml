@@ -19,4 +19,4 @@ reqwest = { version = "0.11.14", features = ["json", "rustls-tls"], default-feat
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = "1.0.94"
 teloxide = { version = "0.12.2", features = ["rustls", "macros", "webhooks-axum", "ctrlc_handler"], default-features = false }
-tokio = { version = "1.26.0", features = ["full"] }
+tokio = { version = "1.38.2", features = ["full"] }
